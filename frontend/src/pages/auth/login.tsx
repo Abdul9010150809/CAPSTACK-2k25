@@ -110,7 +110,7 @@ export default function Login() {
           </Button>
           <Box textAlign="center">
             <Link href="/auth/register" variant="body2">
-              "Don&#39;t have an account? Sign Up"
+              <p>Don&apos;t have an account?</p>
             </Link>
           </Box>
         </Box>
