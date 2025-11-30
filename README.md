@@ -1,4 +1,4 @@
-# CAPSTACK
+# CAPSTACK-2k25
 
 A multi-service monorepo for personal financial health management with AI-powered insights.
 
