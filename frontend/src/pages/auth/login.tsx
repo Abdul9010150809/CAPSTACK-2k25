@@ -21,12 +21,20 @@ export default function Login() {
   const theme = useTheme();
   const router = useRouter();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', pin: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // For PIN, only allow 4 digits
+    if (name === 'pin') {
+      if (value.length <= 4 && /^\d*$/.test(value)) {
+        setFormData({ ...formData, [name]: value });
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,14 +104,15 @@ export default function Login() {
             margin="normal"
             required
             fullWidth
-            name="password"
-            label="Password"
+            name="pin"
+            label="4-Digit PIN"
             type="password"
-            id="password"
-            autoComplete="current-password"
-            value={formData.password}
+            id="pin"
+            inputProps={{ maxLength: 4, inputMode: 'numeric', pattern: '[0-9]*' }}
+            value={formData.pin}
             onChange={handleChange}
             disabled={loading}
+            helperText="Enter your 4-digit PIN"
           />
           <Button
             type="submit"

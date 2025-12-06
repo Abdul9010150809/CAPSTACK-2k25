@@ -125,13 +125,79 @@ export class DatabaseService {
   }
 
   /**
+   * Get user by email and pin for authentication
+   */
+  static async getUserByEmailAndPin(email: string, pin: string): Promise<{ id: number; email: string; name: string } | null> {
+    try {
+      const result = await query(`SELECT id, email, name FROM users WHERE email = $1 AND pin = $2 LIMIT 1`, [email, pin]);
+      if (result.rows.length > 0) {
+        return result.rows[0];
+      }
+      return null;
+    } catch (error) {
+      logger.error(`Failed to get user by email and pin ${email}: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Verify user PIN
+   */
+  static async verifyUserPin(userId: number, pin: string): Promise<boolean> {
+    try {
+      const result = await query(`SELECT pin FROM users WHERE id = $1 LIMIT 1`, [userId]);
+      if (result.rows.length > 0) {
+        return result.rows[0].pin === pin;
+      }
+      return false;
+    } catch (error) {
+      logger.error(`Failed to verify PIN for user ${userId}: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Create user with PIN
+   */
+  static async createUserWithPin(email: string, name: string, pin: string): Promise<number> {
+    try {
+      const result = await query(
+        `INSERT INTO users (email, name, pin, created_at)
+         VALUES ($1, $2, $3, NOW())
+         RETURNING id`,
+        [email, name, pin]
+      );
+
+      if (result.rows.length > 0) {
+        const userId = result.rows[0].id;
+        // Create default user profile
+        try {
+          await query(
+            `INSERT INTO user_profiles (user_id, monthly_income, monthly_expenses, emergency_fund, savings_rate, experience_years, created_at, updated_at)
+             VALUES ($1, 0, 0, 0, 0.0, 30, NOW(), NOW())
+             ON CONFLICT (user_id) DO NOTHING`,
+            [userId]
+          );
+        } catch (e) {
+          logger.error(`Failed to create user_profile for user ${userId}: ${e}`);
+        }
+        return userId;
+      }
+      return 0;
+    } catch (error) {
+      logger.error(`Failed to create user with PIN for email ${email}: ${error}`);
+      return 0;
+    }
+  }
+
+  /**
    * Ensure a user row exists for the given email. If exists, return id, otherwise create and return new id.
    */
   static async ensureUserExists(email: string, name: string): Promise<number> {
     try {
       const result = await query(
-        `INSERT INTO users (email, name, created_at)
-         VALUES ($1, $2, NOW())
+        `INSERT INTO users (email, name, pin, created_at)
+         VALUES ($1, $2, '0000', NOW())
          ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
          RETURNING id`,
         [email, name]

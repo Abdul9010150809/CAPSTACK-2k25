@@ -20,26 +20,33 @@ export const verify = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, pin } = req.body;
     
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !pin) {
+      return res.status(400).json({ error: 'Email and PIN are required' });
     }
 
-    // For demo purposes, ensure user exists (get or create)
-    const name = (req.body.name as string) || email.split('@')[0];
-    const userId = await DatabaseService.ensureUserExists(email, name);
+    // Validate PIN is 4 digits
+    if (!/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
+    }
+
+    // Get user by email and pin
+    const user = await DatabaseService.getUserByEmailAndPin(email, pin);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or PIN' });
+    }
 
     // Sign token
     const token = jwt.sign(
-      { userId, email, name },
+      { userId: user.id, email: user.email, name: user.name },
       config.jwtSecret,
       { expiresIn: '7d' }
     );
     
     return res.json({
       token,
-      user: { id: userId.toString(), email, name }
+      user: { id: user.id.toString(), email: user.email, name: user.name }
     });
   } catch (error: any) {
     console.error('Login error:', error);
@@ -49,10 +56,15 @@ export const login = async (req: Request, res: Response) => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, pin, name } = req.body;
     
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Email, password, and name are required' });
+    if (!email || !pin || !name) {
+      return res.status(400).json({ error: 'Email, PIN, and name are required' });
+    }
+
+    // Validate PIN is 4 digits
+    if (!/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
     }
 
     // Check if user already exists
@@ -61,9 +73,8 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'User already exists with this email' });
     }
 
-    // Create new user
-    // Create new user (or get existing one if ensureUserExists handles idempotency)
-    const userId = await DatabaseService.ensureUserExists(email, name);
+    // Create new user with PIN
+    const userId = await DatabaseService.createUserWithPin(email, name, pin);
 
     const token = jwt.sign(
       { userId, email, name },
