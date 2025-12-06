@@ -17,17 +17,37 @@ Node.js + TypeScript + Express backend for CAPSTACK.
 - `JWT_SECRET`: JWT secret key
 - `REDIS_URL`: Redis connection string
 
-## API Endpoints
+## API Endpoints (quick reference)
 
-- `GET /health`: Health check
+### Auth
 - `POST /auth/login`: User login
 - `POST /auth/register`: User registration
-- `GET /users/profile`: Get user profile
-- `POST /finance/calculate`: Finance calculations
-- `GET /finance/healthscore`: Get health score
-- `GET /finance/survival`: Get survival months
-- `POST /savings/lock`: Lock savings
-- `POST /savings/unlock/:planId`: Unlock savings
-- `GET /savings/status`: Get savings status
+- `POST /auth/guest`: Guest token (limited/demo access)
 
-TODO: Add more endpoints and documentation.
+### Finance (guest-friendly)
+- `POST /finance/calculate` (optional auth): Core finance calc
+- `GET /finance/healthscore` (optional auth): Health score
+- `GET /finance/survival` (optional auth): Survival estimate
+- `GET /finance/incomescore` (optional auth): Income score
+- `GET /finance/insights` (optional auth): Personalized when authed; returns demo insights for guests (prevents 401/403)
+- `GET /finance/asset-allocation` (optional auth): Personalized when authed; returns demo allocation + formulas for guests
+- `POST /finance/asset-allocation/update` (auth required): Persist allocation
+- `GET /finance/emergency-status` (optional auth): Personalized when authed; returns demo emergency-fund status for guests (fixes 403s)
+- `POST /finance/emergency-simulation` (optional auth): Personalized simulation when authed; demo scenarios for guests
+- `GET /finance/trends/:period` (auth required)
+- `POST /finance/sip-plan` (no auth required)
+
+### Savings (discipline engine)
+- `GET /savings/status` (optional auth): Personalized when authed; demo savings snapshot for guests
+- `GET /savings/insights` (optional auth): Personalized when authed; demo discipline insights for guests
+- `POST /savings/plan` (auth required): Create plan
+- `POST /savings/lock` (auth required)
+- `POST /savings/unlock/:planId` (auth required)
+- `POST /savings/check-transaction` (auth required)
+- `POST /savings/process-transaction` (auth required)
+- `POST /savings/auto-save` (auth required)
+
+### Health
+- `GET /health`: Service health check
+
+> Guest/demo responses are returned when no JWT or a guest token is provided. Mutations still require full auth to avoid data corruption.

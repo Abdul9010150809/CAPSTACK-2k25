@@ -1,7 +1,7 @@
-🏦 CAPSTACK
+🏦 CAPSTACK — Datanyx Hackathon Edition
 💰 AI-Powered Personal Financial Health Management Platform
 
-A multi-service monorepo designed to help individuals take control of their financial health, powered by AI/ML insights, automated savings, and intelligent personal finance analytics.
+Built for the Datanyx Hackathon, CAPSTACK is a multi-service monorepo designed to help individuals take control of their financial health, powered by AI/ML insights, automated savings, and intelligent personal finance analytics.
 
 🌍 Real-World Problem
 
