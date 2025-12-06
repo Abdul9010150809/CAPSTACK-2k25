@@ -190,44 +190,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Ensure a user row exists for the given email. If exists, return id, otherwise create and return new id.
-   */
-  static async ensureUserExists(email: string, name: string): Promise<number> {
-    try {
-      const result = await query(
-        `INSERT INTO users (email, name, pin, created_at)
-         VALUES ($1, $2, '0000', NOW())
-         ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
-         RETURNING id`,
-        [email, name]
-      );
-
-      if (result.rows.length > 0) {
-        const userId = result.rows[0].id;
-        // Ensure a user_profiles row exists with default values so finance endpoints can operate
-        try {
-          await query(
-            `INSERT INTO user_profiles (user_id, monthly_income, monthly_expenses, emergency_fund, savings_rate, experience_years, created_at, updated_at)
-             VALUES ($1, 0, 0, 0, 0.0, 30, NOW(), NOW())
-             ON CONFLICT (user_id) DO NOTHING`,
-            [userId]
-          );
-        } catch (e) {
-          logger.error(`Failed to ensure user_profile for user ${userId}: ${e}`);
-        }
-
-        return userId;
-      }
-      // Fallback: try selecting
-      const sel = await query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [email]);
-      if (sel.rows.length > 0) return sel.rows[0].id;
-      return 0;
-    } catch (error) {
-      logger.error(`Failed to ensure user exists for email ${email}: ${error}`);
-      return 0;
-    }
-  }
 
   /**
    * Save asset allocation data
