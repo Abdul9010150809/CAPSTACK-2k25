@@ -23,8 +23,11 @@ export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   // Dummy check
   if (email && password) {
-    const token = jwt.sign({ userId: 1 }, config.jwtSecret);
-    res.json({ token });
+    const userId = 1;
+    const name = (req.body.name as string) || 'User';
+    // Sign token with user info and expiry so frontend can validate `exp`
+    const token = jwt.sign({ userId, email, name }, config.jwtSecret, { expiresIn: '7d' });
+    res.json({ token, user: { id: userId.toString(), email, name } });
   } else {
     res.status(400).json({ error: 'Invalid credentials' });
   }

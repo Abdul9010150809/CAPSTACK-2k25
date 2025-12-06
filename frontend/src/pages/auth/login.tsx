@@ -36,14 +36,23 @@ export default function Login() {
 
     try {
       const response = await api.post('/auth/login', formData);
-      const { token } = response.data;
+      const { token, user } = response.data;
+
+      // Prefer user object returned from backend, fallback to form data
+      const userData = user
+        ? {
+            id: user.id?.toString() || "1",
+            email: user.email || formData.email,
+            name: user.name || "User"
+          }
+        : {
+            id: "1",
+            email: formData.email,
+            name: "User"
+          };
 
       // Use the new login method with token and user data
-      login(token, {
-        id: "1",
-        email: formData.email,
-        name: "User"
-      });
+      login(token, userData);
 
       router.push('/dashboard');
     } catch (err: any) {
