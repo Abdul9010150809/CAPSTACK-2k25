@@ -46,9 +46,10 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       return Promise.reject(new Error('Token missing or expired'));
     }
 
-    // Attach valid token
+    // Attach valid token (normalize if it accidentally contains a 'Bearer ' prefix)
+    const rawToken = token.startsWith('Bearer ') ? token.slice(7) : token;
     config.headers = config.headers || ({} as any);
-    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+    (config.headers as Record<string, string>).Authorization = `Bearer ${rawToken}`;
     // Debug: log that a token was attached (safe to remove later)
     // eslint-disable-next-line no-console
     console.debug("axiosClient: attaching token to request", token ? token.substring(0, 20) + '...' : null);
