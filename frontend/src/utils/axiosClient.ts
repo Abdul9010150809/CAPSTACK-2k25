@@ -7,18 +7,51 @@ const api = axios.create({
 });
 
 // Attach token automatically
+// Helper to check token expiry by decoding the JWT payload (no external lib)
+function isTokenExpired(token: string | null) {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return true;
+    const payload = JSON.parse(decodeURIComponent(
+      atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+        .split('')
+        .map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join('')
+    ));
+    if (!payload || typeof payload !== 'object') return true;
+    if (!payload.exp) return true;
+    const now = Date.now() / 1000;
+    return payload.exp <= now;
+  } catch (e) {
+    return true;
+  }
+}
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      // Debug: log that a token was attached (safe to remove later)
-      // eslint-disable-next-line no-console
-      console.debug("axiosClient: attaching token to request", token ? token.substring(0, 20) + '...' : null);
-    } else {
-      // eslint-disable-next-line no-console
-      console.debug("axiosClient: no token found in localStorage");
+
+    // If token is missing or expired, clear and redirect to login
+    if (!token || isTokenExpired(token)) {
+      try { localStorage.removeItem('token'); } catch (e) {}
+      // avoid redirect loop if on auth pages
+      const pathname = window.location.pathname;
+      if (!pathname.startsWith('/auth')) {
+        window.location.href = '/auth/login';
+      }
+      // Reject the request to avoid sending an invalid token
+      return Promise.reject(new Error('Token missing or expired'));
     }
+
+    // Attach valid token
+    config.headers = config.headers || ({} as any);
+    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+    // Debug: log that a token was attached (safe to remove later)
+    // eslint-disable-next-line no-console
+    console.debug("axiosClient: attaching token to request", token ? token.substring(0, 20) + '...' : null);
   }
   return config;
 });
