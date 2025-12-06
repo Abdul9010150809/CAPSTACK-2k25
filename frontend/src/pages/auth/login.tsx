@@ -51,12 +51,14 @@ export default function Login() {
         ? {
             id: user.id?.toString() || "1",
             email: user.email || formData.email,
-            name: user.name || "User"
+            name: user.name || "User",
+            isGuest: user.isGuest || false
           }
         : {
             id: "1",
             email: formData.email,
-            name: "User"
+            name: "User",
+            isGuest: false
           };
 
       // Use the new login method with token and user data
@@ -65,6 +67,32 @@ export default function Login() {
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/auth/guest-login');
+      const { token, user } = response.data;
+
+      const userData = {
+        id: user.id?.toString() || "0",
+        email: user.email || null,
+        name: user.name || "Guest User",
+        isGuest: user.isGuest || true
+      };
+
+      // Use the login method with token and user data
+      login(token, userData);
+
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Guest login failed');
     } finally {
       setLoading(false);
     }
@@ -86,38 +114,48 @@ export default function Login() {
           </Alert>
         )}
 
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2, mb: 3, py: 1.5 }}
+          onClick={handleGuestLogin}
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} /> : 'Continue as Guest'}
+        </Button>
+
+        <Typography variant="body2" align="center" sx={{ mb: 2 }}>or sign in with your account</Typography>
+
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
             margin="normal"
-            required
             fullWidth
             id="email"
-            label="Email Address"
+            label="Email Address (Optional)"
             name="email"
             autoComplete="email"
-            autoFocus
             value={formData.email}
             onChange={handleChange}
             disabled={loading}
           />
           <TextField
             margin="normal"
-            required
             fullWidth
             name="pin"
-            label="4-Digit PIN"
+            label="4-Digit PIN (Optional)"
             type="password"
             id="pin"
             inputProps={{ maxLength: 4, inputMode: 'numeric', pattern: '[0-9]*' }}
             value={formData.pin}
             onChange={handleChange}
             disabled={loading}
-            helperText="Enter your 4-digit PIN"
+            helperText="Required for advanced features"
           />
           <Button
             type="submit"
             fullWidth
-            variant="contained"
+            variant="outlined"
             sx={{ mt: 3, mb: 2, py: 1.5 }}
             disabled={loading}
           >
@@ -125,7 +163,7 @@ export default function Login() {
           </Button>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Link href="/auth/register" variant="body2">
-              <p>Don&apos;t have an account?</p>
+              <p>Create an account for advanced features</p>
             </Link>
           </Box>
         </Box>

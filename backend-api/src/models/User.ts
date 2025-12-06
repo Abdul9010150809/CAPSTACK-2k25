@@ -3,11 +3,12 @@ import { logger } from '../utils/logger';
 
 export interface User {
   id: number;
-  email: string;
+  email: string | null; // Allow null for guest users
   pin: string;
   name: string;
   createdAt: Date;
   updatedAt: Date;
+  isGuest?: boolean; // Optional flag for guest users
 }
 
 export const createUser = async (user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User | null> => {

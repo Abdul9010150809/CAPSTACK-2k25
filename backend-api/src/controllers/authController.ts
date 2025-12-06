@@ -18,9 +18,45 @@ export const verify = async (req: Request, res: Response) => {
   }
 };
 
+export const guestLogin = async (req: Request, res: Response) => {
+  try {
+    // Generate unique guest ID
+    const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const guestEmail = `${guestId}@guest.capstack.local`;
+    const guestName = 'Guest User';
+
+    // Create temporary guest user with default PIN
+    const userId = await DatabaseService.createGuestUser(guestEmail, guestName);
+
+    if (!userId || userId === 0) {
+      return res.status(500).json({ error: 'Failed to create guest session' });
+    }
+
+    // Sign token
+    const token = jwt.sign(
+      { userId, email: guestEmail, name: guestName, isGuest: true },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+
+    return res.json({
+      token,
+      user: { id: userId.toString(), email: guestEmail, name: guestName, isGuest: true }
+    });
+  } catch (error: any) {
+    console.error('Guest login error:', error);
+    return res.status(500).json({ error: 'Failed to create guest session' });
+  }
+};
+
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, pin } = req.body;
+    
+    // If no credentials provided, treat as guest login
+    if (!email && !pin) {
+      return guestLogin(req, res);
+    }
     
     if (!email || !pin) {
       return res.status(400).json({ error: 'Email and PIN are required' });
@@ -39,14 +75,14 @@ export const login = async (req: Request, res: Response) => {
 
     // Sign token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, name: user.name },
+      { userId: user.id, email: user.email, name: user.name, isGuest: false },
       config.jwtSecret,
       { expiresIn: '7d' }
     );
     
     return res.json({
       token,
-      user: { id: user.id.toString(), email: user.email, name: user.name }
+      user: { id: user.id.toString(), email: user.email, name: user.name, isGuest: false }
     });
   } catch (error: any) {
     console.error('Login error:', error);
@@ -57,7 +93,7 @@ export const login = async (req: Request, res: Response) => {
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, pin, name } = req.body;
-    
+
     if (!email || !pin || !name) {
       return res.status(400).json({ error: 'Email, PIN, and name are required' });
     }
@@ -75,7 +111,7 @@ export const register = async (req: Request, res: Response) => {
 
     // Create new user with PIN
     const userId = await DatabaseService.createUserWithPin(email, name, pin);
-    
+
     if (!userId || userId === 0) {
       console.error('Failed to create user - userId is 0 or null');
       return res.status(500).json({ error: 'Failed to create user account. Please try again.' });
@@ -86,7 +122,7 @@ export const register = async (req: Request, res: Response) => {
       config.jwtSecret,
       { expiresIn: '7d' }
     );
-    
+
     return res.json({
       message: 'User registered successfully',
       token,
@@ -94,9 +130,9 @@ export const register = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Registration error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Registration failed. Please try again.',
-      details: error.message 
+      details: error.message
     });
   }
 };

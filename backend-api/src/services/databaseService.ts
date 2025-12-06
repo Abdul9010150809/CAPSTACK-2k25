@@ -181,9 +181,69 @@ export class DatabaseService {
   }
 
   /**
-   * Create user with PIN
+   * Create guest user
    */
-  static async createUserWithPin(email: string, name: string, pin: string): Promise<number> {
+  static async createGuestUser(email: string, name: string): Promise<number> {
+    try {
+      logger.info(`Creating guest user with email: ${email}, name: ${name}`);
+
+      const result = await query(
+        `INSERT INTO users (email, name, pin, created_at, updated_at)
+         VALUES ($1, $2, $3, NOW(), NOW())
+         RETURNING id`,
+        [email, name, '0000'] // Default PIN for guest users
+      );
+
+      if (result.rows.length > 0) {
+        const userId = result.rows[0].id;
+        logger.info(`Guest user created successfully with id: ${userId}`);
+
+        // Create default user profile for guest
+        try {
+          await query(
+            `INSERT INTO user_profiles (user_id, monthly_income, monthly_expenses, emergency_fund, savings_rate, experience_years, created_at, updated_at)
+             VALUES ($1, 0, 0, 0, 0.0, 30, NOW(), NOW())
+             ON CONFLICT (user_id) DO NOTHING`,
+            [userId]
+          );
+          logger.info(`Guest user profile created for user ${userId}`);
+        } catch (e) {
+          logger.error(`Failed to create guest user_profile for user ${userId}: ${e}`);
+          // Don't fail the registration if profile creation fails
+        }
+        return userId;
+      }
+      logger.error('No rows returned after guest user insert');
+      return 0;
+    } catch (error: any) {
+      logger.error(`Failed to create guest user for email ${email}: ${error.message || error}`);
+      console.error('Full error:', error);
+
+      // Fallback to in-memory storage
+      logger.info('Falling back to in-memory storage for guest user');
+      useInMemory = true;
+      const existingUser = inMemoryUsers.find(u => u.email === email);
+      if (existingUser) {
+        throw new Error('Guest user already exists');
+      }
+      const newUser: InMemoryUser = {
+        id: nextUserId++,
+        email,
+        password: '0000',
+        name,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      inMemoryUsers.push(newUser);
+      logger.info(`Guest user created in memory with id: ${newUser.id}`);
+      return newUser.id;
+    }
+  }
+
+  /**
+    * Create user with PIN
+    */
+   static async createUserWithPin(email: string, name: string, pin: string): Promise<number> {
     try {
       logger.info(`Creating user with email: ${email}, name: ${name}, pin length: ${pin.length}`);
 
@@ -229,16 +289,16 @@ export class DatabaseService {
       const newUser: InMemoryUser = {
         id: nextUserId++,
         email,
-        password: pin,
         name,
+        password: pin,
         createdAt: new Date(),
         updatedAt: new Date()
       };
       inMemoryUsers.push(newUser);
-      logger.info(`User created in memory with id: ${newUser.id}`);
       return newUser.id;
     }
   }
+
 
 
   /**

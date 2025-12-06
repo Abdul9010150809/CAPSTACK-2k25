@@ -4,8 +4,9 @@ import api from '@/utils/axiosClient';
 
 type User = {
   id: string;
-  email: string;
+  email: string | null;
   name?: string;
+  isGuest?: boolean;
 };
 
 type AuthContextType = {
@@ -55,8 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const payload = decoded as any;
         const userData = {
           id: payload.userId?.toString() || payload.id?.toString() || '1',
-          email: payload.email || 'user@example.com',
-          name: payload.name || 'User'
+          email: payload.email || null,
+          name: payload.name || 'User',
+          isGuest: payload.isGuest || false
         };
         setUser(userData);
       } catch (error) {
