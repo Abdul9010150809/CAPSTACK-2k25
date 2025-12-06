@@ -50,9 +50,6 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const rawToken = token.startsWith('Bearer ') ? token.slice(7) : token;
     config.headers = config.headers || ({} as any);
     (config.headers as Record<string, string>).Authorization = `Bearer ${rawToken}`;
-    // Debug: log that a token was attached (safe to remove later)
-    // eslint-disable-next-line no-console
-    console.debug("axiosClient: attaching token to request", token ? token.substring(0, 20) + '...' : null);
   }
   return config;
 });
@@ -63,22 +60,7 @@ api.interceptors.response.use(
   (error) => {
     try {
       if (error?.response?.status === 401) {
-        // eslint-disable-next-line no-console
-        console.warn("axiosClient: received 401 Unauthorized from API", error.response?.config?.url);
-        // For demo mode, don't redirect to login
-        // Clear stored token and redirect to login so the app can re-authenticate
-        // try {
-        //   localStorage.removeItem("token");
-        // } catch (e) {
-        //   // ignore
-        // }
-        // if (typeof window !== "undefined") {
-        //   // Avoid infinite redirect loops for auth routes
-        //   const pathname = window.location.pathname;
-        //   if (!pathname.startsWith("/auth")) {
-        //     window.location.href = "/auth/login";
-        //   }
-        // }
+        // Token already handled in request interceptor
       }
     } catch (e) {
       // ignore logging errors

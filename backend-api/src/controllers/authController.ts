@@ -7,21 +7,6 @@ import { findUserByEmail, validatePassword, createUser } from '../models/User';
 import { query } from '../config/db';
 import { logger } from '../utils/logger';
 
-export const verify = async (req: Request, res: Response) => {
-  try {
-    const authHeader = req.headers.authorization as string | undefined;
-    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
-
-    const token = authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Invalid token format' });
-
-    const decoded = jwt.verify(token, config.jwtSecret);
-    return res.json({ valid: true, payload: decoded });
-  } catch (err: any) {
-    return res.status(401).json({ valid: false, error: err.message || 'Unauthorized' });
-  }
-};
-
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;

@@ -21,19 +21,7 @@ export const authMiddleware = (req: Request & { userId?: string }, res: Response
       return res.status(401).json({ error: "Invalid token format" });
     }
 
-    // Debug: log token snippet (do not log full token in production)
-    try {
-      // eslint-disable-next-line no-console
-      console.debug(`authMiddleware: token snippet=${token?.slice(0,12)}...`);
-    } catch (e) {}
-
     const decoded = jwt.verify(token, config.jwtSecret);
-    // Debug: log decoded payload (short)
-    try {
-      // eslint-disable-next-line no-console
-      console.debug('authMiddleware: decoded payload keys=', Object.keys(decoded as any));
-    } catch (e) {}
-
     req.userId = (decoded as any).userId;
 
     next();

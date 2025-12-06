@@ -51,23 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // Verify token with backend to ensure it's valid server-side
-        try {
-          const res = await api.get('/auth/verify');
-          // Backend may return the decoded payload under res.data.payload or indicate valid
-          const payload = res.data?.payload || (decoded as any);
-          const userData = {
-            id: payload.userId?.toString() || payload.id?.toString() || '1',
-            email: payload.email || 'user@example.com',
-            name: payload.name || 'User'
-          };
-          setUser(userData);
-        } catch (e) {
-          // Verification failed server-side
-          console.warn('Token verification failed:', e);
-          localStorage.removeItem('token');
-          setUser(null);
-        }
+        // Token is valid locally, extract user data
+        const payload = decoded as any;
+        const userData = {
+          id: payload.userId?.toString() || payload.id?.toString() || '1',
+          email: payload.email || 'user@example.com',
+          name: payload.name || 'User'
+        };
+        setUser(userData);
       } catch (error) {
         console.error("Auth initialization error:", error);
         localStorage.removeItem("token");
