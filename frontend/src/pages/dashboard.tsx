@@ -39,7 +39,8 @@ import {
   BarChart,
   ArrowForward,
   ShowChart,
-  Shield
+  Shield,
+  Assessment
 } from '@mui/icons-material';
 import {
   PieChart as RechartsPie,
@@ -506,6 +507,37 @@ export default function Dashboard() {
           </Typography>
 
           <Grid container spacing={3}>
+            {/* Assessment Button */}
+            <Grid item xs={12} sm={6} md={3}>
+              <Fade in timeout={200}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    cursor: 'pointer',
+                    transition: '0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: theme.shadows[12]
+                    }
+                  }}
+                  onClick={() => router.push('/assessment')}
+                >
+                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <Assessment sx={{ fontSize: 48, color: 'info.main', mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Financial Assessment
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Evaluate your financial stability
+                    </Typography>
+                    <Stack direction="row" justifyContent="center">
+                      <ArrowForward sx={{ fontSize: 20, color: 'info.main' }} />
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Fade>
+            </Grid>
+
             {/* Allocation Button */}
             <Grid item xs={12} sm={6} md={3}>
               <Fade in timeout={300}>

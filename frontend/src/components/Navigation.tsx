@@ -35,6 +35,7 @@ const Navigation = () => {
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: <Dashboard /> },
+    { label: 'Assessment', href: '/assessment', icon: <Assessment /> },
     { label: 'Allocation', href: '/allocation', icon: <PieChart /> },
     { label: 'Emergency', href: '/emergency', icon: <Shield /> },
     { label: 'Savings', href: '/savings', icon: <Savings /> },
