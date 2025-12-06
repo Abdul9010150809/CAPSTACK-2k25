@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 import { DatabaseService } from '../services/databaseService';
+import { findUserByEmail, validatePassword, createUser } from '../models/User';
 
 export const verify = async (req: Request, res: Response) => {
   try {
@@ -19,25 +20,76 @@ export const verify = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  // TODO: Implement login logic
-  const { email, password } = req.body;
-  // Dummy check
-  if (email && password) {
-    const name = (req.body.name as string) || 'User';
-    // Ensure the user exists in the database and get their id
-    const ensuredUserId = await DatabaseService.ensureUserExists(email, name);
-    const userId = ensuredUserId || 1;
-    // Sign token with user info and expiry so frontend can validate `exp`
-    const token = jwt.sign({ userId, email, name }, config.jwtSecret, { expiresIn: '7d' });
-    res.json({ token, user: { id: userId.toString(), email, name } });
-  } else {
-    res.status(400).json({ error: 'Invalid credentials' });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user by email
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Email not found. Please check your email or register for a new account.' });
+    }
+
+    // Validate password
+    const isValidPassword = await validatePassword(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Incorrect password. Please try again or reset your password.' });
+    }
+
+    // Sign token with user info and expiry
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, name: user.name },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id.toString(),
+        email: user.email,
+        name: user.name
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 export const register = async (req: Request, res: Response) => {
-  // TODO: Implement registration
-  const { email, password, name } = req.body;
-  // Dummy response
-  res.json({ message: 'User registered', userId: 1 });
+  try {
+    const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Email, password, and name are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await findUserByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists with this email' });
+    }
+
+    // Create new user
+    const newUser = await createUser({ email, password, name });
+    if (!newUser) {
+      return res.status(500).json({ error: 'Failed to create user' });
+    }
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: {
+        id: newUser.id.toString(),
+        email: newUser.email,
+        name: newUser.name
+      }
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
