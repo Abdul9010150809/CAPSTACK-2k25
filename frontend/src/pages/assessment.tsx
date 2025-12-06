@@ -37,6 +37,7 @@ import {
   TableRow
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useRouter } from 'next/router';
 import {
   Assessment as AssessmentIcon,
   TrendingUp,
@@ -69,6 +70,7 @@ import {
   Line
 } from 'recharts';
 
+import { useAuth } from '@/context/AuthContext';
 import sampleData from '@/data/sample_dataset.json';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -174,7 +176,32 @@ interface AssessmentResult {
 
 export default function Assessment() {
   const theme = useTheme();
+  const router = useRouter();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4, textAlign: "center" }}>
+        <CircularProgress size={60} sx={{ mb: 2 }} />
+        <Typography variant="h6">Loading...</Typography>
+      </Container>
+    );
+  }
+
+  // Don't render assessment if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [data, setData] = useState<FinancialData>({
     monthlyIncome: 0,
