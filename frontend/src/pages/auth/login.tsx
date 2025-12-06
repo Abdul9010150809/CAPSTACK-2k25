@@ -77,7 +77,7 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await api.post('/auth/guest-login');
+      const response = await api.post('/auth/guest');
       const { token, user } = response.data;
 
       const userData = {
