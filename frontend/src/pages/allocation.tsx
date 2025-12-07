@@ -173,10 +173,12 @@ export default function Allocation() {
 
       const backendUrl = api.defaults.baseURL || 'https://capstack-2k25-backend.onrender.com';
       const endpoint = '/finance/asset-allocation';
-      console.log('Fetching allocation from:', `${backendUrl}${endpoint}`);
+      const fullUrl = new URL(endpoint, backendUrl).toString();
+      console.log('Fetching allocation from:', fullUrl);
       
       try {
-        const response = await api.get(endpoint);
+        // Use absolute URL to avoid any baseURL/path issues in production bundles
+        const response = await api.get(fullUrl);
 
         // Backend returned an error format
         if (response.data?.error || response.data?.message || response.data?.success === false) {
@@ -223,7 +225,7 @@ export default function Allocation() {
         console.error("404 Debug Info:", {
           requestUrl: url,
           baseURL: baseUrl,
-          fullUrl: `${baseUrl}${url}`,
+          fullUrl: new URL(url || '/finance/asset-allocation', baseUrl).toString(),
           availableEndpoints: [
             '/finance/health',
             '/finance/asset-allocation',
