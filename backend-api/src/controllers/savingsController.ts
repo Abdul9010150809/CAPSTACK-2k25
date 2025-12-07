@@ -36,9 +36,14 @@ export const createPlan = async (req: Request, res: Response) => {
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required to create savings plans' });
   }
-  const planData = req.body;
-  const result = createSavingsPlan(userId, planData);
-  res.json(result);
+  
+  try {
+    const planData = req.body;
+    const result = await createSavingsPlan(userId, planData);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to create savings plan' });
+  }
 };
 
 export const getInsights = async (req: Request, res: Response) => {

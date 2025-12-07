@@ -109,18 +109,33 @@ export const getSavingsStatus = async (userId: number) => {
     const monthlyIncome = userData?.monthlyIncome || 0;
     const monthlyAutoSave = Math.floor(monthlyIncome * 0.25); // 25% auto-save
 
-    // Get savings plans data
+    // Get all savings plans for user
     const plansResult = await query(`
       SELECT
-        COALESCE(SUM(current_amount), 0) as total_current,
-        COALESCE(SUM(target_amount), 0) as total_target,
-        COUNT(*) as plan_count
+        id,
+        name,
+        target_amount,
+        current_amount,
+        monthly_contribution,
+        lock_percentage,
+        target_date
       FROM savings_plans
       WHERE user_id = $1
+      ORDER BY created_at DESC
     `, [userId]);
 
-    const plansData = plansResult.rows[0];
-    const totalSaved = parseFloat(plansData.total_current) || 0;
+    const plans = plansResult.rows.map((plan: any) => ({
+      id: plan.id,
+      name: plan.name,
+      target_amount: parseFloat(plan.target_amount) || 0,
+      current_amount: parseFloat(plan.current_amount) || 0,
+      monthly_contribution: parseFloat(plan.monthly_contribution) || 0,
+      lock_percentage: parseFloat(plan.lock_percentage) || 0,
+      target_date: plan.target_date
+    }));
+
+    // Calculate totals from plans
+    const totalSaved = plans.reduce((sum: number, p: any) => sum + (p.current_amount || 0), 0);
 
     // Assume 70% is locked, 30% available (simplified)
     const locked = Math.floor(totalSaved * 0.7);
@@ -148,7 +163,8 @@ export const getSavingsStatus = async (userId: number) => {
       monthlyAutoSave,
       disciplineScore,
       lastAutoSave,
-      nextUnlockDate
+      nextUnlockDate,
+      plans
     };
   } catch (error) {
     logger.error(`Failed to get savings status for user ${userId}: ${error}`);
@@ -160,27 +176,56 @@ export const getSavingsStatus = async (userId: number) => {
       monthlyAutoSave: 6250,
       disciplineScore: 85,
       lastAutoSave: new Date(),
-      nextUnlockDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      nextUnlockDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      plans: []
     };
   }
 };
 
-export const createSavingsPlan = (userId: number, plan: Omit<SavingsPlan, 'id' | 'userId' | 'createdAt'>) => {
-  const newPlan: SavingsPlan = {
-    ...plan,
-    id: Date.now(),
-    userId,
-    createdAt: new Date()
-  };
+export const createSavingsPlan = async (userId: number, plan: Omit<SavingsPlan, 'id' | 'userId' | 'createdAt'>) => {
+  try {
+    const result = await query(`
+      INSERT INTO savings_plans (
+        user_id,
+        name,
+        target_amount,
+        current_amount,
+        monthly_contribution,
+        lock_percentage,
+        target_date,
+        created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      RETURNING id, name, target_amount, current_amount, monthly_contribution, lock_percentage, target_date, created_at
+    `, [
+      userId,
+      plan.name,
+      plan.targetAmount || 0,
+      plan.currentAmount || 0,
+      plan.monthlyContribution || 0,
+      plan.lockPercentage || 0,
+      plan.targetDate || null
+    ]);
 
-  // TODO: Save to database
-  logger.info(`Created savings plan "${plan.name}" for user ${userId}`);
+    const newPlan = result.rows[0];
+    logger.info(`Created savings plan "${plan.name}" for user ${userId}`);
 
-  return {
-    success: true,
-    plan: newPlan,
-    autoLockScheduled: plan.lockPercentage > 0
-  };
+    return {
+      success: true,
+      plan: {
+        id: newPlan.id,
+        name: newPlan.name,
+        target_amount: parseFloat(newPlan.target_amount),
+        current_amount: parseFloat(newPlan.current_amount),
+        monthly_contribution: parseFloat(newPlan.monthly_contribution),
+        lock_percentage: parseFloat(newPlan.lock_percentage),
+        target_date: newPlan.target_date
+      },
+      autoLockScheduled: (plan.lockPercentage || 0) > 0
+    };
+  } catch (error) {
+    logger.error(`Failed to create savings plan for user ${userId}: ${error}`);
+    throw new Error(`Failed to create savings plan: ${error}`);
+  }
 };
 
 export const getDisciplineInsights = (userId: number) => {
