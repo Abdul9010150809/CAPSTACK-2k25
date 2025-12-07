@@ -73,6 +73,8 @@ interface AllocationData {
     investmentRiskScore: number;
     stabilityIndex: number;
   };
+  requiresOnboarding?: boolean;
+  note?: string;
 }
 
 //
@@ -190,6 +192,12 @@ export default function Allocation() {
           throw new Error("Backend returned incomplete allocation data");
         }
 
+        // Check if user needs to complete onboarding
+        if (response.data.requiresOnboarding) {
+          setRequiresRegistration(true);
+          setError(response.data.note || "Complete your profile to get personalized allocation recommendations.");
+        }
+
         setData(response.data);
       } catch (apiError: any) {
         // Provide detailed error information
@@ -293,18 +301,29 @@ export default function Allocation() {
         <Box textAlign="center">
           {requiresRegistration ? (
             <Stack direction="row" spacing={2} justifyContent="center">
-              <Button
-                variant="contained"
-                onClick={() => router.push('/auth/register')}
-              >
-                Register for Full Access
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => router.push('/auth/login')}
-              >
-                Login
-              </Button>
+              {data?.requiresOnboarding ? (
+                <Button
+                  variant="contained"
+                  onClick={() => router.push('/onboarding')}
+                >
+                  Complete Your Profile
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    onClick={() => router.push('/auth/register')}
+                  >
+                    Register for Full Access
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => router.push('/auth/login')}
+                  >
+                    Login
+                  </Button>
+                </>
+              )}
             </Stack>
           ) : (
             <Button variant="contained" onClick={fetchAllocationData}>Retry</Button>

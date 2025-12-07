@@ -37,6 +37,7 @@ import {
   AccountBalance
 } from '@mui/icons-material';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/router';
 import {
   PieChart as RechartsPie,
   Pie,
@@ -89,18 +90,28 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function Emergency() {
   const theme = useTheme();
+  const router = useRouter();
   const { user } = useAuth();
   const isGuest = !user || user.isGuest;
   const [data, setData] = useState<EmergencyFundData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [requiresOnboarding, setRequiresOnboarding] = useState(false);
 
   const fetchEmergencyData = async () => {
     try {
       setLoading(true);
       setError(null);
+      setRequiresOnboarding(false);
       const response = await api.get('/finance/emergency-status');
+      
+      // Check if user needs to complete onboarding
+      if (response.data.requiresOnboarding) {
+        setRequiresOnboarding(true);
+        setError(response.data.note || "Complete your profile to see your actual emergency fund status.");
+      }
+      
       setData(response.data);
     } catch (err) {
       console.error('Failed to fetch emergency fund data:', err);
@@ -198,12 +209,21 @@ export default function Emergency() {
   if (error) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mb: 4 }}>
-          <AlertTitle>Connection Error</AlertTitle>
+        <Alert severity={requiresOnboarding ? "info" : "error"} sx={{ mb: 4 }}>
+          <AlertTitle>{requiresOnboarding ? "Profile Incomplete" : "Connection Error"}</AlertTitle>
           {error}
         </Alert>
         <Box textAlign="center">
-          <Button variant="contained" onClick={fetchEmergencyData}>Retry</Button>
+          {requiresOnboarding ? (
+            <Button
+              variant="contained"
+              onClick={() => router.push('/onboarding')}
+            >
+              Complete Your Profile
+            </Button>
+          ) : (
+            <Button variant="contained" onClick={fetchEmergencyData}>Retry</Button>
+          )}
         </Box>
       </Container>
     );

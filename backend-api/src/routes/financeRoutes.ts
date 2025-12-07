@@ -215,8 +215,56 @@ router.get("/asset-allocation", optionalAuthMiddleware, async (req, res) => {
 
     const userData = await DatabaseService.getUserFinancialData(userId);
     if (!userData) {
-      return res.status(404).json({
-        error: "User financial data not found. Please complete your profile.",
+      // User authenticated but hasn't completed onboarding - return demo data with prompt
+      const guestInput = {
+        monthlyIncome: 52000,
+        monthlyExpenses: 31000,
+        emergencyFund: 186000,
+        debtAmount: 50000,
+        age: 30,
+        riskTolerance: "medium" as const,
+        jobStability: 7,
+        marketConditions: "neutral" as const,
+        inflationRate: 6.0,
+      };
+
+      const allocation = await AssetAllocationService.calculateOptimalAllocation(guestInput);
+
+      const formulas = {
+        sipCagr: AssetAllocationService.calculateSipCagr(
+          allocation.allocatedAmounts.sip,
+          10,
+          12
+        ),
+        emergencyMonths: AssetAllocationService.calculateEmergencyFundMonths(
+          allocation.allocatedAmounts.emergency,
+          guestInput.monthlyExpenses
+        ),
+        debtToIncome: AssetAllocationService.calculateDebtToIncomeRatio(
+          guestInput.debtAmount,
+          guestInput.monthlyIncome * 12
+        ),
+        savingsRate: AssetAllocationService.calculateSavingsRate(
+          guestInput.monthlyIncome,
+          guestInput.monthlyExpenses
+        ),
+        investmentRiskScore: AssetAllocationService.calculateInvestmentRiskScore(allocation),
+        stabilityIndex: 70,
+      };
+
+      return res.json({
+        allocation: {
+          sipPercentage: allocation.sipPercentage,
+          stocksPercentage: allocation.stocksPercentage,
+          bondsPercentage: allocation.bondsPercentage,
+          lifestylePercentage: allocation.lifestylePercentage,
+          emergencyFundPercentage: allocation.emergencyFundPercentage,
+          allocatedAmounts: allocation.allocatedAmounts,
+          reasoning: allocation.reasoning,
+        },
+        formulas,
+        requiresOnboarding: true,
+        note: "Complete your profile to get personalized allocation recommendations.",
       });
     }
 
@@ -386,15 +434,58 @@ router.get("/emergency-status", optionalAuthMiddleware, async (req, res) => {
     }
 
     const existingData = await DatabaseService.getEmergencyFundData(userId);
+    const userFinData = await DatabaseService.getUserFinancialData(userId);
+
+    // User authenticated but hasn't completed onboarding - return demo data
+    if (!userFinData && !existingData) {
+      const guestExpenses = 31000;
+      const guestFund = 186000;
+
+      const emergencyStatus = EmergencyFundService.calculateEmergencyFundStatus(
+        guestFund,
+        guestExpenses
+      );
+
+      const simulations = EmergencyFundService.simulateEmergencyScenarios(
+        guestFund,
+        guestExpenses,
+        guestExpenses * 1.7
+      );
+
+      const optimalContribution = EmergencyFundService.calculateOptimalContribution(
+        guestFund,
+        guestExpenses,
+        guestExpenses * 1.7
+      );
+
+      const depletionRisk = EmergencyFundService.monitorDepletionRisk(
+        guestFund,
+        guestExpenses,
+        guestExpenses * 1.7,
+        7
+      );
+
+      return res.json({
+        status: emergencyStatus,
+        simulations,
+        optimalContribution,
+        depletionRisk,
+        recommendations: [
+          "Complete your profile to get personalized emergency fund recommendations",
+          "Maintain emergency fund at 6 months of expenses",
+          "Contribute monthly to build fund gradually",
+        ],
+        requiresOnboarding: true,
+        note: "Complete your profile to see your actual emergency fund status.",
+      });
+    }
 
     if (existingData) {
-      const userData = await DatabaseService.getUserFinancialData(userId);
-
-      const monthlyExpenses = userData
-        ? userData.monthlyExpenses
+      const monthlyExpenses = userFinData
+        ? userFinData.monthlyExpenses
         : existingData.monthlyBurnRate;
-      const monthlyIncome = userData
-        ? userData.monthlyIncome
+      const monthlyIncome = userFinData
+        ? userFinData.monthlyIncome
         : existingData.monthlyBurnRate * 2;
 
       const simulations = EmergencyFundService.simulateEmergencyScenarios(
@@ -438,44 +529,42 @@ router.get("/emergency-status", optionalAuthMiddleware, async (req, res) => {
       });
     }
 
-    const userData = await DatabaseService.getUserFinancialData(userId);
-
-    if (!userData) {
+    if (!userFinData) {
       return res.status(404).json({
         error: "User financial data not found. Please complete your profile.",
       });
     }
 
     const status = EmergencyFundService.calculateEmergencyFundStatus(
-      userData.emergencyFund,
-      userData.monthlyExpenses
+      userFinData.emergencyFund,
+      userFinData.monthlyExpenses
     );
 
     const simulations = EmergencyFundService.simulateEmergencyScenarios(
-      userData.emergencyFund,
-      userData.monthlyExpenses,
-      userData.monthlyIncome
+      userFinData.emergencyFund,
+      userFinData.monthlyExpenses,
+      userFinData.monthlyIncome
     );
 
     const optimalContribution =
       EmergencyFundService.calculateOptimalContribution(
-        userData.emergencyFund,
-        userData.monthlyExpenses,
-        userData.monthlyIncome
+        userFinData.emergencyFund,
+        userFinData.monthlyExpenses,
+        userFinData.monthlyIncome
       );
 
     const depletionRisk = EmergencyFundService.monitorDepletionRisk(
-      userData.emergencyFund,
-      userData.monthlyExpenses,
-      userData.monthlyIncome,
-      userData.jobStability
+      userFinData.emergencyFund,
+      userFinData.monthlyExpenses,
+      userFinData.monthlyIncome,
+      userFinData.jobStability
     );
 
     const emergencyData = {
       userId,
-      currentBalance: userData.emergencyFund,
+      currentBalance: userFinData.emergencyFund,
       targetMonths: 6,
-      monthlyBurnRate: userData.monthlyExpenses,
+      monthlyBurnRate: userFinData.monthlyExpenses,
       monthsCoverage: status.monthsCoverage,
       status: status.status,
       recommendedAction: status.recommendedAction,
