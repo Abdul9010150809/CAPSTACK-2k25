@@ -13,6 +13,16 @@
 
 CAPSTACK is a comprehensive multi-service platform designed to help individuals achieve financial wellness through AI/ML insights, automated savings, and intelligent analytics. Perfect for international hackathons with premium UI/UX, production-ready code, and zero errors.
 
+## 👥 Team Error 404
+
+**Team Members:**
+- **Shaik Abdul Sammed** - Full Stack Developer & Team Lead
+- **Shaik Muzkeer** - Backend Developer
+- **Shaik Shafi** - Frontend Developer
+- **B. Praveen** - ML Engineer
+
+Together, we're building intelligent financial solutions to help people achieve financial wellness and security.
+
 ---
 
 ## 📋 Table of Contents
