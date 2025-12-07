@@ -1,8 +1,17 @@
 # 🏦 CAPSTACK — AI-Powered Personal Finance Platform
 
-**Datanyx Hackathon Edition** | Intelligent Financial Health Management System
+**International Hackathon Edition** | Intelligent Financial Health Management System
 
-CAPSTACK is a comprehensive multi-service platform designed to help individuals achieve financial wellness through AI/ML insights, automated savings, and intelligent analytics.
+[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=flat-square)](https://github.com/Abdul9010150809/CAPSTACK-2k25)
+[![Zero Errors](https://img.shields.io/badge/Code%20Quality-Zero%20Errors-brightgreen?style=flat-square)](https://github.com/Abdul9010150809/CAPSTACK-2k25)
+[![Premium UI](https://img.shields.io/badge/UI%2FUX-Premium-blue?style=flat-square)](https://github.com/Abdul9010150809/CAPSTACK-2k25)
+[![Responsive](https://img.shields.io/badge/Design-Responsive-informational?style=flat-square)](https://github.com/Abdul9010150809/CAPSTACK-2k25)
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?style=flat-square)](https://nodejs.org)
+
+> **Build Your Safety Net Before the Market Shifts**
+
+CAPSTACK is a comprehensive multi-service platform designed to help individuals achieve financial wellness through AI/ML insights, automated savings, and intelligent analytics. Perfect for international hackathons with premium UI/UX, production-ready code, and zero errors.
 
 ---
 
@@ -27,7 +36,40 @@ CAPSTACK is a comprehensive multi-service platform designed to help individuals 
 
 ---
 
-## 🌍 Problem Statement
+## 🎨 Latest Enhancements (International Hackathon Edition)
+
+### UI/UX Improvements ✨
+- **Modern Design System**: Professional gradient palette with primary (#007AF7) and secondary (#6C63FF) colors
+- **Premium Components**: Glassmorphism effects, smooth animations, responsive layouts
+- **Enhanced Navigation**: Gradient AppBar with user menu, active state indicators, mobile drawer
+- **Interactive Forms**: Real-time calculations, smart validation, helpful error messages
+- **Advanced Visualizations**: Animated circular scores, pulse effects, progress bars
+- **Professional Animations**: Slide-in, fade, pulse, and float animations throughout
+
+### Key Component Upgrades
+- **HealthScoreCard**: Animated score display with AI recommendations
+- **SurvivalCalculatorCard**: Interactive metrics with pulsing indicator
+- **IncomeExpenseForm**: Real-time savings rate calculation with validation
+- **SavingsLockCard**: Dialog-based interactions with preset amounts
+- **AlertsPanel**: Categorized alerts with dismissal and action handling
+- **HomePage**: Modern hero section with floating cards and CTAs
+
+### Backend Excellence 🛠️
+- **Error Handling**: Structured responses, async wrappers, 404 handlers
+- **Logging System**: File-based logging with timestamps and severity levels
+- **CORS Configuration**: Multiple origin support with proper validation
+- **Health Checks**: Monitoring-ready endpoints with version info
+- **Graceful Shutdown**: Signal handlers for clean server termination
+- **Unhandled Rejections**: Proper error catching and logging
+
+### Design System 🎨
+- **Typography**: Inter (body) and Poppins (headings) with 6 heading levels
+- **Spacing**: Consistent 8px grid with responsive padding
+- **Colors**: Primary, secondary, success, warning, error with variants
+- **Components**: Styled buttons, inputs, cards with gradient effects
+- **Accessibility**: WCAG compliant with focus states and reduced motion
+
+---
 
 Modern financial management faces critical challenges:
 
