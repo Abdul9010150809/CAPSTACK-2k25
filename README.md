@@ -8,16 +8,22 @@ CAPSTACK is a comprehensive multi-service platform designed to help individuals 
 
 ## 📋 Table of Contents
 
-1. [Problem Statement](#problem-statement)
-2. [Solution Overview](#solution-overview)
-3. [Key Features](#key-features)
-4. [Technology Stack](#technology-stack)
-5. [System Architecture](#system-architecture)
-6. [Project Structure](#project-structure)
-7. [Development Setup](#development-setup)
-8. [API Documentation](#api-documentation)
-9. [Live Deployment](#live-deployment)
-10. [Contributing](#contributing)
+1. [Problem Statement](#-problem-statement)
+2. [Solution Overview](#-solution-overview)
+3. [Key Features](#-key-features)
+4. [Technology Stack](#-technology-stack)
+5. [System Architecture](#-system-architecture)
+6. [Project Structure](#-project-structure)
+7. [Development Setup](#-development-setup)
+8. [API Documentation](#-api-documentation)
+9. [Testing](#-testing)
+10. [CI/CD Pipeline](#-cicd-pipeline)
+11. [Live Deployment](#-live-deployment)
+12. [Contributing](#-contributing)
+13. [License](#-license)
+14. [Getting Started](#-getting-started)
+15. [Support](#-support)
+16. [Acknowledgments](#-acknowledgments)
 
 ---
 
