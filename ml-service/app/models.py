@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import Dict, Any
 
 import numpy as np
-from sklearn.ensemble import (
+from sklearn.ensemble import (  # type: ignore
     RandomForestRegressor,
     GradientBoostingClassifier,
 )
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler  # type: ignore
 import joblib
 
 logger = logging.getLogger(__name__)
@@ -24,21 +24,48 @@ MODEL_DIR.mkdir(exist_ok=True)
 
 
 class FinancialRiskModel:
-    """Risk scoring model using ensemble methods"""
+    """Enhanced Risk scoring model using advanced ensemble methods"""
 
     def __init__(self):
-        self.model = RandomForestRegressor(
-            n_estimators=100,
-            max_depth=15,
-            random_state=42,
-            n_jobs=-1
-        )
+        # Use XGBoost for better performance
+        try:
+            from xgboost import XGBRegressor
+            self.model = XGBRegressor(
+                n_estimators=200,
+                max_depth=8,
+                learning_rate=0.05,
+                subsample=0.8,
+                colsample_bytree=0.8,
+                random_state=42,
+                n_jobs=-1,
+                objective='reg:squarederror',
+                reg_alpha=0.1,
+                reg_lambda=0.1
+            )
+        except ImportError:
+            # Fallback to RandomForest if XGBoost not available
+            self.model = RandomForestRegressor(
+                n_estimators=200,
+                max_depth=12,
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=42,
+                n_jobs=-1,
+                max_features='sqrt'
+            )
         self.scaler = StandardScaler()
         self.is_trained = False
+        has_booster = hasattr(self.model, 'booster')
+        model_type = "XGBoost" if has_booster else "RandomForest"
         self.metadata = {
-            "version": "1.0.0",
+            "version": "2.0.0",
             "created": datetime.utcnow().isoformat(),
-            "accuracy_score": 0.0
+            "accuracy_score": 0.0,
+            "model_type": model_type,
+            "features": [
+                "income", "expenses", "savings", "debt",
+                "debt_to_income", "savings_to_income", "expense_to_income"
+            ]
         }
 
     def prepare_features(self, data: Dict[str, float]) -> np.ndarray:
@@ -272,7 +299,8 @@ class SavingsProjectionModel:
             future = current + monthly * months
         else:
             growth_factor = (1 + ret) ** months
-            future = current * growth_factor + monthly * (growth_factor - 1) / ret
+            monthly_component = monthly * (growth_factor - 1) / ret
+            future = current * growth_factor + monthly_component
 
         return future
 

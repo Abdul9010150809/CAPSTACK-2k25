@@ -1,6 +1,6 @@
 import type { AppProps } from 'next/app';
 import '../styles/globals.css';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '../src/context/AuthContext';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

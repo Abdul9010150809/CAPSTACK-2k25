@@ -23,6 +23,13 @@ from sklearn.metrics import (
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Import models
+from app.models import (
+    FinancialRiskModel,
+    LayoffRiskModel,
+    SavingsProjectionModel
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -30,32 +37,45 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from models import (
-    FinancialRiskModel,
-    LayoffRiskModel,
-    SavingsProjectionModel
-)
-
 
 def generate_risk_training_data(
     n_samples: int = 1000,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Generate synthetic training data for risk model"""
+    """Generate enhanced synthetic training data for risk model"""
     logger.info("Generating %d risk training samples...", n_samples)
 
-    # Feature ranges
-    incomes = np.random.uniform(20000, 150000, n_samples)
-    expenses_ratio = np.random.uniform(0.5, 1.2, n_samples)
+    # Feature ranges with more realistic distributions
+    incomes = np.random.lognormal(10, 0.3, n_samples)
+    incomes = np.clip(incomes, 20000, 200000)
+
+    # More sophisticated expense modeling
+    base_expenses = np.random.uniform(0.4, 0.8, n_samples)
+    discretionary = np.random.uniform(0.1, 0.4, n_samples)
+    expenses_ratio = base_expenses + discretionary
     expenses = incomes * expenses_ratio
-    savings_ratio = np.random.uniform(0, 0.5, n_samples)
+
+    # More realistic savings patterns
+    savings_ratio = np.random.beta(2, 5, n_samples) * 0.6
     savings = incomes * savings_ratio
-    debt_ratio = np.random.uniform(0, 1.5, n_samples)
+
+    # Debt modeling with different types
+    debt_ratio = np.random.exponential(0.5, n_samples)
+    debt_ratio = np.clip(debt_ratio, 0, 2.0)
     debt = incomes * debt_ratio
 
     # Additional derived features
     expense_to_income = expenses / np.maximum(incomes, 1)
     savings_to_income = savings / np.maximum(incomes, 1)
     debt_to_income = debt / np.maximum(incomes, 1)
+
+    # New enhanced features
+    disposable_income = incomes - expenses
+    debt_service_ratio = np.where(incomes > 0, debt / incomes, 0)
+    savings_buffer = np.where(expenses > 0, savings / expenses, 0)
+
+    # Add some noise and outliers for robustness
+    incomes = incomes * np.random.normal(1, 0.05, n_samples)
+    expenses = expenses * np.random.normal(1, 0.03, n_samples)
 
     X = np.column_stack([
         incomes,
@@ -64,15 +84,20 @@ def generate_risk_training_data(
         debt,
         debt_to_income,
         savings_to_income,
-        expense_to_income
+        expense_to_income,
+        disposable_income,
+        debt_service_ratio,
+        savings_buffer
     ])
 
-    # Generate risk scores based on ratios
+    # Generate risk scores based on enhanced formula
     y = (
-        (expense_to_income * 0.5) +
+        (expense_to_income * 0.4) +
         ((1 - savings_to_income) * 0.3) +
-        (debt_to_income * 0.2)
-    ) * 100 + np.random.normal(0, 5, n_samples)
+        (debt_to_income * 0.25) +
+        (1 / (1 + savings_buffer) * 0.15) -
+        (disposable_income / incomes * 0.1)
+    ) * 100 + np.random.normal(0, 3, n_samples)
     y = np.clip(y, 0, 100)
 
     logger.info("Generated X shape: %s, y shape: %s", X.shape, y.shape)
